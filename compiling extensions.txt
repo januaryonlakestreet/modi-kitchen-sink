@@ -1,0 +1,2 @@
+https://animadversio.github.io/tech_note/debugging-stylegan2
+https://animadversio.github.io/tech_note/note-on-compiling-torch-extensions
