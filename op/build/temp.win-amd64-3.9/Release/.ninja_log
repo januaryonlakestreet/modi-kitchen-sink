@@ -1,0 +1,5 @@
+# ninja log v5
+1	13048	6920849696264214	D:/phdmethods/MoDi-main/op/build/temp.win-amd64-3.9/Release/fused_bias_act.obj	dcf2d68c158f9822
+7	21809	6920849783858999	D:/phdmethods/MoDi-main/op/build/temp.win-amd64-3.9/Release/fused_bias_act_kernel.obj	e41b45585cc692ea
+20	12447	6920853031287241	D:/phdmethods/MoDi-main/op/build/temp.win-amd64-3.9/Release/upfirdn2d.obj	b31ae2362b07dc2b
+25	19842	6920853105153572	D:/phdmethods/MoDi-main/op/build/temp.win-amd64-3.9/Release/upfirdn2d_kernel.obj	dd16fd67258c9edc
