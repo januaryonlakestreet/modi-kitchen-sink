@@ -1,16 +1,14 @@
 import os
 import os.path as osp
 import shutil
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
-
-from Clustering.view_bvh import BvhViewer
 from utils.visualization import motion2bvh
-from matplotlib.widgets import Button
-from utils.pre_run import GenerateOptions, load_all_form_checkpoint
+from flask import Flask, render_template
+import threading
+import webbrowser
 
 
 def ShowViewer():
@@ -46,12 +44,19 @@ class ModiViewer:
         self.StdJoints = std_joint
         self.Entity = entity
         self.EdgeRotDictGeneral = edge_rot_dict_general
-
+        self.SaveSelectedMotionLocation = './clustering/static/animations/'
         self.ClusterFig, self.ClusterAxes = plt.subplots()
         self.ClusterAxes.set_title("Modi clustering")
         # self.ElbowMethod()
-        #self.SilhouetteScore()
+        # self.SilhouetteScore()
         self.GenerateClusters()
+        self.port = 23336
+        self.NewBrowser = True
+        self.host_name = "0.0.0.0"
+        self.app = Flask(__name__)
+        self.app.add_url_rule('/', 'index', self.ViewAnimation)
+        threading.Thread(
+            target=lambda: self.app.run(host=self.host_name, port=self.port, debug=True, use_reloader=False)).start()
         ShowViewer()
 
     def SilhouetteScore(self):
@@ -117,7 +122,7 @@ class ModiViewer:
         MotionsNumpy = np.reshape(MotionsNumpy, [len(MotionsNumpy), 4 * 23 * 64])
 
         K_ = KMeans(n_clusters=8)
-        reduced_data_tsne = TSNE(n_components=3,perplexity=50).fit_transform(np.array(MotionsNumpy))
+        reduced_data_tsne = TSNE(n_components=3, perplexity=50).fit_transform(np.array(MotionsNumpy))
         Labels = K_.fit_predict(reduced_data_tsne)
 
         Colours = ['red', 'green', 'blue', 'olive', 'purple', 'cyan', 'magenta', 'Coral']
@@ -133,21 +138,21 @@ class ModiViewer:
         self.ClusterFig.canvas.mpl_connect('close_event', self.onClose)
 
     def OnClick(self, event):
-        print("on click called")
+
         ind = event.ind
         motion_np, _ = ConvertGeneratedMotionToNumpy(self.GeneratedMotions)
         values = pd.DataFrame(list(zip(motion_np, _))).iloc[ind[0]]
-        Location = osp.join('./saved/', f'{values[1]}.bvh')
-        motion2bvh(np.array(values[0]), osp.join('./saved/', f'{values[1]}.bvh'),
+
+        motion2bvh(np.array(values[0]), osp.join(self.SaveSelectedMotionLocation, f'{values[1]}.bvh'),
                    parents=self.Entity.parents_list, type='sample', entity=self.Entity.str(),
                    edge_rot_dict_general=self.EdgeRotDictGeneral)
 
-        ViewAnimation = BvhViewer(Location, values[1])
-        ViewAnimation.DrawBVH()
+        webbrowser.open("http://127.0.0.1:23336/?seed=" + str(values[1]), new=self.NewBrowser)
+        self.NewBrowser = False
 
     def onClose(self, event):
-        for filename in os.listdir('./saved/'):
-            file_path = os.path.join('./saved/', filename)
+        for filename in os.listdir(self.SaveSelectedMotionLocation):
+            file_path = os.path.join(self.SaveSelectedMotionLocation, filename)
             try:
                 if os.path.isfile(file_path) or os.path.islink(file_path):
                     os.unlink(file_path)
@@ -156,6 +161,8 @@ class ModiViewer:
             except Exception as e:
                 print('Failed to delete %s. Reason: %s' % (file_path, e))
 
+    def ViewAnimation(self):
+        return render_template('ViewAnimation.html')
 
 
 
