@@ -2,7 +2,9 @@ import numpy as np
 import pickle as pkl
 import os
 import argparse
-humanact12_coarse_action_to_label = {x: x-1 for x in range(1, 13)}
+
+humanact12_coarse_action_to_label = {x: x - 1 for x in range(1, 13)}
+
 
 def splitname(name):
     subject = name[1:3]
@@ -12,6 +14,7 @@ def splitname(name):
     frame2 = name[15:19]
     action = name[20:24]
     return subject, group, time, frame1, frame2, action
+
 
 humanact12_coarse_action_enumerator = {
     1: "warm_up",
@@ -35,6 +38,7 @@ def get_action(name, coarse=True):
         return action[:2]
     else:
         return action
+
 
 def process_data(savepath, datapath, savepath_uniform):
     data_list = os.listdir(datapath)
@@ -63,21 +67,21 @@ def process_data(savepath, datapath, savepath_uniform):
             continue
         if length == frames:
             m = np.zeros(np.array([frames, 16, 3]))
-            m[:,0:15,:] = motion
+            m[:, 0:15, :] = motion
             dataset_fixed_length.append(m)
             dataset_uniform['joints3D_sampled'].append(motion)
             dataset_uniform['y'].append(dataset['y'][idx])
         i = 0
-        while i+frames < length:
+        while i + frames < length:
             m = np.zeros(np.array([frames, 16, 3]))
-            m[:,0:15,:] = motion[i:i+64]
+            m[:, 0:15, :] = motion[i:i + 64]
             dataset_fixed_length.append(m)
             dataset_uniform['y'].append(dataset['y'][idx])
-            dataset_uniform['joints3D_sampled'].append(motion[i:i+64])
-            i+=frames//2
+            dataset_uniform['joints3D_sampled'].append(motion[i:i + 64])
+            i += frames // 2
 
     ds = np.asarray(dataset_fixed_length)
-    ds = ds.transpose(0,2,3,1)
+    ds = ds.transpose(0, 2, 3, 1)
 
     np.save('data/humanact12motion.npy', ds)
 
@@ -85,8 +89,10 @@ def process_data(savepath, datapath, savepath_uniform):
 
     pkl.dump(dataset, open(savepath, "wb"))
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate samples from the generator and compute action recognition model features")
+    parser = argparse.ArgumentParser(
+        description="Generate samples from the generator and compute action recognition model features")
     parser.add_argument("--datapath", type=str, help="path to data folder")
     args = parser.parse_args()
 
