@@ -1,1 +1,0 @@
---ckpt ./data/ckpt.pt --path ./data/edge_rot_joints.npy --act_rec_gt_path ./evaluation/data/humanact12motion.npy
