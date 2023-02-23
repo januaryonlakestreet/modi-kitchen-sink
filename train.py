@@ -550,7 +550,7 @@ def main(args_not_parsed):
     loader = data.DataLoader(
         dataset,
         batch_size=args.batch,
-        sampler=data_sampler(dataset, shuffle=True, distributed=args.distributed),
+        sampler=data_sampler(dataset, shuffle=False, distributed=args.distributed),
         drop_last=True,
     )
 

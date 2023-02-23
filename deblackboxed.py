@@ -19,7 +19,7 @@ def sample(args, g_ema, device, mean_latent):
 
     seed_rnd_mult = args.motions * 10000
     seeds = np.array([])
-    n_motions = args.motions * 10
+    n_motions = 1#args.motions * 10
     while np.unique(seeds).shape[0] != n_motions:  # refrain from duplicates in seeds
         seeds = (np.random.random(n_motions) * seed_rnd_mult).astype(int)
     generated_motion = pd.DataFrame(index=seeds, columns=['motion', 'W'], dtype=object)
@@ -81,7 +81,12 @@ def get_gen_mot_np(args, generated_motion, mean_joints, std_joints):
 
 def cluster(motions, mean_joints, std_joints, entity, edge_rot_dict_general):
     from Clustering.PyPltModiViewer import ModiViewer
+    from Clustering.MotionClassificationModel import MotionClassification
+
     Viewer = ModiViewer(motions, mean_joints, std_joints, entity=entity, edge_rot_dict_general=edge_rot_dict_general)
+   # MotionClassification(motions[0]['motion'])
+
+
 
 
 def generate(args, g_ema, device, mean_joints, std_joints, entity):

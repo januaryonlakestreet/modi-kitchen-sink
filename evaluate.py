@@ -10,7 +10,7 @@ import torch
 from torch.utils.data import DataLoader
 import numpy as np
 from utils.data import anim_from_edge_rot_dict, un_normalize, edge_rot_dict_from_edge_motion_data, motion_from_raw
-from utils.data import Joint, Edge # to be used in 'eval'
+from utils.data import Joint, Edge  # to be used in 'eval'
 import sys as _sys
 from evaluation.action2motion.fid import calculate_fid
 from evaluation.action2motion.diversity import calculate_diversity
@@ -23,8 +23,8 @@ from utils.pre_run import EvaluateOptions, load_all_form_checkpoint
 
 TEST = False
 
-def generate(args, g_ema, device, mean_joints, std_joints, entity):
 
+def generate(args, g_ema, device, mean_joints, std_joints, entity):
     # arguments required by generation
     args.sample_seeds = None
     args.no_idle = False
@@ -43,12 +43,13 @@ def generate(args, g_ema, device, mean_joints, std_joints, entity):
 
     generated_motion = generated_motions.motion
     # convert motion to numpy
-    if isinstance(generated_motion, pd.Series): # yes
+    if isinstance(generated_motion, pd.Series):  # yes
         index = generated_motion.index
         if not isinstance(generated_motion.iloc[0], list) and \
                 generated_motion.iloc[0].ndim == 4 and generated_motion.iloc[0].shape[0] > 1:
-            generated_motion = generated_motion.apply(lambda motions: torch.unsqueeze(motions, 1)) # add a batch dimension
-            generated_motion = generated_motion.apply(list) # get_gen_mot_np expects lists
+            generated_motion = generated_motion.apply(
+                lambda motions: torch.unsqueeze(motions, 1))  # add a batch dimension
+            generated_motion = generated_motion.apply(list)  # get_gen_mot_np expects lists
         generated_motion = generated_motion.tolist()
     else:
         assert isinstance(generated_motion, list)
@@ -69,13 +70,15 @@ def convert_motions_to_location(args, generated_motion_np, edge_rot_dict_general
     edge_rot_dict_general['std_tensor'] = edge_rot_dict_general['std_tensor'].cpu()
     edge_rot_dict_general['mean_tensor'] = edge_rot_dict_general['mean_tensor'].cpu()
     if args.dataset == 'mixamo':
-        edge_rot_dict_general['offsets_no_root'] /= 100 ## not needed in humanact
+        edge_rot_dict_general['offsets_no_root'] /= 100  ## not needed in humanact
 
     generated_motions = []
 
     # get anim for xyz positions
-    motion_data = un_normalize(generated_motion_np, mean=edge_rot_dict_general['mean'].transpose(0, 2, 1, 3), std=edge_rot_dict_general['std'].transpose(0, 2, 1, 3))
-    anim_dicts, frame_mults, is_sub_motion = edge_rot_dict_from_edge_motion_data(motion_data, type='sample', edge_rot_dict_general = edge_rot_dict_general)
+    motion_data = un_normalize(generated_motion_np, mean=edge_rot_dict_general['mean'].transpose(0, 2, 1, 3),
+                               std=edge_rot_dict_general['std'].transpose(0, 2, 1, 3))
+    anim_dicts, frame_mults, is_sub_motion = edge_rot_dict_from_edge_motion_data(motion_data, type='sample',
+                                                                                 edge_rot_dict_general=edge_rot_dict_general)
 
     for j, (anim_dict, frame_mult) in enumerate(zip(anim_dicts, frame_mults)):
         anim, names = anim_from_edge_rot_dict(anim_dict, root_name='Hips')
@@ -83,7 +86,8 @@ def convert_motions_to_location(args, generated_motion_np, edge_rot_dict_general
         positions = Animation.positions_global(anim)
 
         # sample joints relevant to 15 joints skeleton
-        positions_15joints = positions[:, [7, 6, 15, 16, 17, 10, 11, 12, 0, 23, 24, 25, 19, 20, 21]] # openpose order R then L
+        positions_15joints = positions[:,
+                             [7, 6, 15, 16, 17, 10, 11, 12, 0, 23, 24, 25, 19, 20, 21]]  # openpose order R then L
         positions_15joints = positions_15joints.transpose(1, 2, 0)
         positions_15joints_oriented = positions_15joints.copy()
         if args.dataset == 'mixamo':
@@ -94,7 +98,8 @@ def convert_motions_to_location(args, generated_motion_np, edge_rot_dict_general
     generated_motions = np.asarray(generated_motions)
     return generated_motions
 
-#endregion
+
+# endregion
 
 def calculate_activation_statistics(activations):
     activations = activations.cpu().detach().numpy()
@@ -102,6 +107,7 @@ def calculate_activation_statistics(activations):
     mu = np.mean(activations, axis=0)
     sigma = np.cov(activations, rowvar=False)
     return mu, sigma
+
 
 def initialize_model(device, modelpath, dataset='mixamo'):
     if dataset == 'mixamo':
@@ -119,13 +125,14 @@ def initialize_model(device, modelpath, dataset='mixamo'):
     model.eval()
     return model
 
+
 def compute_features(model, iterator):
     device = 'cuda'
     activations = []
     predictions = []
     with torch.no_grad():
         for i, batch in enumerate(iterator):
-        # for i, batch in tqdm(enumerate(iterator), desc="Computing batch"):
+            # for i, batch in tqdm(enumerate(iterator), desc="Computing batch"):
             batch_for_model = {}
             batch_for_model['x'] = batch.to(device).float()
             model(batch_for_model)
@@ -137,6 +144,7 @@ def compute_features(model, iterator):
         # labels = torch.cat(labels, dim=0)
         # shape torch.Size([16, 15, 3, 64]) (batch, joints, xyz, frames)
     return activations, predictions
+
 
 def main(args_not_parsed):
     parser = EvaluateOptions()
@@ -175,7 +183,6 @@ def main(args_not_parsed):
     generated_features, generated_predictions = compute_features(model, iterator_generated)
     generated_stats = calculate_activation_statistics(generated_features)
 
-
     # dataset motions
     motion_data_raw = np.load(args.act_rec_gt_path, allow_pickle=True)
     motion_data = motion_data_raw[:, :15]
@@ -211,7 +218,7 @@ def main(args_not_parsed):
         print(f"precision: {precision}")
         print(f"recall: {recall}\n")
 
-    #plot histogram of predictions
+    # plot histogram of predictions
     yhat = generated_predictions.max(dim=1).indices
     fig_hist_generated = plt.figure()
     plt.bar(*np.unique(yhat.cpu(), return_counts=True))
@@ -232,10 +239,10 @@ def main(args_not_parsed):
 
     if not TEST:
         save_results(args, fid, kid, (generated_diversity, dataset_diversity),
-                 (precision, recall), fig_hist_generated, fig_hist_dataset)
+                     (precision, recall), fig_hist_generated, fig_hist_dataset)
+
 
 def save_results(args, fid, kid, diversity, prec_rec, fig_hist_g, fig_hist_r):
-
     # define output path
     if args.out_path is not None:
         out_path = args.out_path
@@ -247,9 +254,10 @@ def save_results(args, fid, kid, diversity, prec_rec, fig_hist_g, fig_hist_r):
 
     # same numeric results
     num_res_path = osp.join(out_path, 'eval.csv')
-    pd.Series({'fid': fid, 'kid':kid, 'diversity':diversity, 'prec_rec':prec_rec}).to_csv(num_res_path, sep='\t', header=None) # save args
+    pd.Series({'fid': fid, 'kid': kid, 'diversity': diversity, 'prec_rec': prec_rec}).to_csv(num_res_path, sep='\t',
+                                                                                             header=None)  # save args
     args_path = osp.join(out_path, 'args.csv')
-    pd.Series(args.__dict__).to_csv(args_path, sep='\t', header=None) # save args
+    pd.Series(args.__dict__).to_csv(args_path, sep='\t', header=None)  # save args
 
     # save distribution images
     fig_name = osp.join(out_path, 'distribution_g.png')

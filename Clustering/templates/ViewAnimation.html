@@ -13,7 +13,12 @@
 				margin: 0px;
 				overflow: hidden;
 			}
-
+			#info_Bottom{
+			 position: absolute;
+  bottom: 10px;
+  width: 50%;
+  border: 3px solid #8AC007;
+			}
 			#info {
 				position: absolute;
 				padding: 10px;
@@ -38,6 +43,7 @@
 		<script src="{{ url_for('static', filename='OrbitControls.js') }}"></script>
 		<script src="{{ url_for('static', filename='BVHLoader.js') }}"></script>
 		<script>
+		
 			var _seedValue = 0
 			var AnimationPathFolder = "/animations/"
 			var AnimationSuffix = ".bvh"
@@ -45,7 +51,7 @@
 			var clock = new THREE.Clock();
 			var camera, controls, scene, renderer;
 			var mixer, skeletonHelper;
-
+			var Multiseeds = 0
 			init();
 			animate();
 			var AnimFullPath = AnimationPathFolder + _seedValue + AnimationSuffix
@@ -92,7 +98,7 @@
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setClearColor( 0xeeeeee );
 				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setSize( window.innerWidth, window.innerHeight);
 
 				document.body.appendChild( renderer.domElement );
 
@@ -123,5 +129,6 @@
 			}
 
 		</script>
+	
 	</body>
 </html>
